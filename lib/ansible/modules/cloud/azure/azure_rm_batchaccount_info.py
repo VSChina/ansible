@@ -51,9 +51,9 @@ options:
 
 extends_documentation_fragment:
     - azure
-    
+
 author:
-    - "Junyi Yi (@JunyiYi)"
+    - Junyi Yi (@JunyiYi)
 '''
 
 EXAMPLES = '''
@@ -69,7 +69,8 @@ EXAMPLES = '''
 
 RETURN = '''
 items:
-    description: List of items
+    description:
+    - List of items.
     returned: always
     type: complex
     contains:
@@ -84,16 +85,19 @@ items:
             - The name of the resource group in which to create the Batch Account.
             returned: always
             type: str
+            sample: myResourceGroup
         name:
             description:
             - The name of the Batch Account.
             returned: always
             type: str
+            sample: mybatchaccount
         location:
             description:
             - Specifies the supported Azure location where the resource exists.
             returned: always
             type: str
+            sample: eastus
         account_endpoint:
             description:
             - The account endpoint used to interact with the Batch service.
@@ -118,14 +122,17 @@ items:
             - The pool acclocation mode of the Batch Account.
             returned: always
             type: str
+            sample: batch_service
         tags:
             description:
             - Resource tags.
             returned: always
-            type: list
+            type: dict
+            sample: "{ 'key1': 'value1', 'key2': 'value2' }"
 '''
 
 from ansible.module_utils.azure_rm_common import AzureRMModuleBase
+from ansible.module_utils.common.dict_transformations import _camel_to_snake
 
 try:
     from msrestazure.azure_exceptions import CloudError
@@ -225,15 +232,15 @@ class AzureRMBatchAccountInfo(AzureRMModuleBase):
     def format_response(self, item):
         d = item.as_dict()
         d = {
-            'id': d['id'],
+            'id': d.get('id'),
             'resource_group': self.resource_group,
-            'name': d['name'],
-            'location': d['location'],
-            'account_endpoint': d['account_endpoint'],
-            'auto_storage_account': d['auto_storage']['storage_account_id'],
-            'key_vault': d['key_vault_reference']['id'],
-            'pool_allocation_mode': d['pool_allocation_mode'],
-            'tags': d['tags'],
+            'name': d.get('name'),
+            'location': d.get('location'),
+            'account_endpoint': d.get('account_endpoint'),
+            'auto_storage_account': d.get('auto_storage', {}).get('storage_account_id'),
+            'key_vault': d.get('key_vault_reference', {}).get('id'),
+            'pool_allocation_mode': _camel_to_snake(d.get('pool_allocation_mode')),
+            'tags': d.get('tags'),
         }
         return d
 
