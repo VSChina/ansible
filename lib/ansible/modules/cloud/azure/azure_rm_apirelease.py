@@ -73,9 +73,9 @@ options:
 
 extends_documentation_fragment:
     - azure
-    
+
 author:
-    - "audevbot"
+    - audevbot
 '''
 
 
