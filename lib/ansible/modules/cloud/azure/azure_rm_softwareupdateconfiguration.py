@@ -84,7 +84,7 @@ options:
             expiry_time_offset_minutes:
                 description:
                 - Gets or sets the expiry time's offset in minutes.
-                type: str
+                type: int
             is_enabled:
                 description:
                 - Gets or sets a value indicating whether this schedule is enabled.
@@ -96,7 +96,7 @@ options:
             next_run_offset_minutes:
                 description:
                 - Gets or sets the next run time's offset in minutes.
-                type: str
+                type: int
             interval:
                 description:
                 - Gets or sets the interval of the schedule.
@@ -125,11 +125,15 @@ options:
                     week_days:
                         description:
                         - Days of the week that the job should execute on.
-                        type: list
+                        type: str
+                    month_days:
+                        description:
+                        - Days of the month that the job should execute on. Must be between 1 and 31.
+                        type: int
                     monthly_occurrences:
                         description:
                         - Occurrences of days within a month.
-                        type: list
+                        type: dict
                         suboptions:
                             occurrence:
                                 description:
@@ -200,7 +204,7 @@ options:
             operating_system:
                 description:
                 - operating system of target machines.
-                required: true
+                default: windows
                 type: str
                 choices:
                 - windows
@@ -228,11 +232,11 @@ options:
                     excluded_kb_numbers:
                         description:
                         - KB numbers excluded from the software update configuration.
-                        type: list
+                        type: str
                     included_kb_numbers:
                         description:
                         - KB numbers included from the software update configuration.
-                        type: list
+                        type: str
                     reboot_setting:
                         description:
                         - Reboot setting for the software update configuration.
@@ -255,11 +259,11 @@ options:
                     excluded_package_name_masks:
                         description:
                         - packages excluded from the software update configuration.
-                        type: list
+                        type: str
                     included_package_name_masks:
                         description:
                         - packages included from the software update configuration.
-                        type: list
+                        type: str
                     reboot_setting:
                         description:
                         - Reboot setting for the software update configuration.
@@ -271,11 +275,15 @@ options:
             azure_virtual_machines:
                 description:
                 - List of azure resource Ids for azure virtual machines targeted by the software update configuration.
-                type: list
+                - It can be the TBD name which is in the same resource group.
+                - "It can be the TBD ID. e.g.,
+                  /subscriptions/5ae68d89-69a4-454f-b5ce-e443cc4e0067/resourceGroups/myresources/providers/Microsoft.Compute/virtualMachines/vm-03."
+                - It can be a dict which contains C(name) and C(resource_group) of the TBD.
+                type: raw
             non_azure_computer_names:
                 description:
                 - List of names of non-azure machines targeted by the software update configuration.
-                type: list
+                type: str
             targets:
                 description:
                 - Group targets for the software update configuration.
@@ -284,20 +292,23 @@ options:
                     azure_queries:
                         description:
                         - List of Azure queries in the software update configuration.
-                        type: list
+                        type: dict
                         suboptions:
                             scope:
                                 description:
                                 - List of Subscription or Resource Group ARM Ids.
-                                type: list
+                                - It can be the TBD name which is in the same resource group.
+                                - It can be the TBD ID. e.g., /subscriptions/5ae68d89-69a4-454f-b5ce-e443cc4e0067.
+                                - It can be a dict which contains C(name) and C(resource_group) of the TBD.
+                                type: raw
                             locations:
                                 description:
                                 - List of locations to scope the query to.
-                                type: list
+                                type: str
                     non_azure_queries:
                         description:
                         - List of non Azure queries in the software update configuration.
-                        type: list
+                        type: dict
                         suboptions:
                             function_alias:
                                 description:
@@ -348,6 +359,11 @@ last_modified_time:
 last_modified_by:
     description:
     - LastModifiedBy property, which only appears in the response.
+    returned: always
+    type: str
+name:
+    description:
+    - Resource name.
     returned: always
     type: str
 id:
@@ -427,7 +443,7 @@ class AzureRMSoftwareUpdateConfiguration(AzureRMModuleBaseExt):
                         type='str'
                     ),
                     expiry_time_offset_minutes=dict(
-                        type='str'
+                        type='int'
                     ),
                     is_enabled=dict(
                         type='bool'
@@ -436,7 +452,7 @@ class AzureRMSoftwareUpdateConfiguration(AzureRMModuleBaseExt):
                         type='str'
                     ),
                     next_run_offset_minutes=dict(
-                        type='str'
+                        type='int'
                     ),
                     interval=dict(
                         type='int'
@@ -453,12 +469,13 @@ class AzureRMSoftwareUpdateConfiguration(AzureRMModuleBaseExt):
                         type='dict',
                         options=dict(
                             week_days=dict(
-                                type='list',
-                                elements='str'
+                                type='str'
+                            ),
+                            month_days=dict(
+                                type='int'
                             ),
                             monthly_occurrences=dict(
-                                type='list',
-                                elements='dict',
+                                type='dict',
                                 options=dict(
                                     occurrence=dict(
                                         type='int'
@@ -515,7 +532,7 @@ class AzureRMSoftwareUpdateConfiguration(AzureRMModuleBaseExt):
                 type='dict',
                 options=dict(
                     operating_system=dict(
-                        required=True,
+                        default='windows',
                         type='str',
                         choices=['windows', 'linux']
                     ),
@@ -528,12 +545,10 @@ class AzureRMSoftwareUpdateConfiguration(AzureRMModuleBaseExt):
                                 choices=['unclassified', 'critical', 'security', 'update_rollup', 'feature_pack', 'service_pack', 'definition', 'tools', 'updates']
                             ),
                             excluded_kb_numbers=dict(
-                                type='list',
-                                elements='str'
+                                type='str'
                             ),
                             included_kb_numbers=dict(
-                                type='list',
-                                elements='str'
+                                type='str'
                             ),
                             reboot_setting=dict(
                                 type='str'
@@ -549,12 +564,10 @@ class AzureRMSoftwareUpdateConfiguration(AzureRMModuleBaseExt):
                                 choices=['unclassified', 'critical', 'security', 'other']
                             ),
                             excluded_package_name_masks=dict(
-                                type='list',
-                                elements='str'
+                                type='str'
                             ),
                             included_package_name_masks=dict(
-                                type='list',
-                                elements='str'
+                                type='str'
                             ),
                             reboot_setting=dict(
                                 type='str'
@@ -565,33 +578,27 @@ class AzureRMSoftwareUpdateConfiguration(AzureRMModuleBaseExt):
                         type='str'
                     ),
                     azure_virtual_machines=dict(
-                        type='list',
-                        elements='str'
+                        type='raw'
                     ),
                     non_azure_computer_names=dict(
-                        type='list',
-                        elements='str'
+                        type='str'
                     ),
                     targets=dict(
                         type='dict',
                         options=dict(
                             azure_queries=dict(
-                                type='list',
-                                elements='dict',
+                                type='dict',
                                 options=dict(
                                     scope=dict(
-                                        type='list',
-                                        elements='str'
+                                        type='raw'
                                     ),
                                     locations=dict(
-                                        type='list',
-                                        elements='str'
+                                        type='str'
                                     )
                                 )
                             ),
                             non_azure_queries=dict(
-                                type='list',
-                                elements='dict',
+                                type='dict',
                                 options=dict(
                                     function_alias=dict(
                                         type='str'
@@ -615,8 +622,8 @@ class AzureRMSoftwareUpdateConfiguration(AzureRMModuleBaseExt):
         self.resource_group = None
         self.automation_account_name = None
         self.name = None
-        self.parameters = dict()
         self.client_request_id = None
+        self.parameters = dict()
 
         self.results = dict(changed=False)
         self.mgmt_client = None
@@ -647,6 +654,16 @@ class AzureRMSoftwareUpdateConfiguration(AzureRMModuleBaseExt):
                 self.parameters['update_configuration']['windows']['included_update_classifications'] = _snake_to_camel(self.parameters['update_configuration']['windows']['included_update_classifications'], True)
             if self.parameters['update_configuration'].get('linux') is not None:
                 self.parameters['update_configuration']['linux']['included_package_classifications'] = _snake_to_camel(self.parameters['update_configuration']['linux']['included_package_classifications'], True)
+            if self.parameters['update_configuration'].get('azure_virtual_machines') is not None:
+                self.parameters['update_configuration']['azure_virtual_machines'] = self.normalize_resource_id(
+                    self.parameters['update_configuration']['azure_virtual_machines'],
+                    '/subscriptions/5ae68d89-69a4-454f-b5ce-e443cc4e0067/resourceGroups/myresources/providers/Microsoft.Compute/virtualMachines/vm-03')
+            if self.parameters['update_configuration'].get('targets') is not None:
+                if self.parameters['update_configuration']['targets'].get('azure_queries') is not None:
+                    if self.parameters['update_configuration']['targets']['azure_queries'].get('scope') is not None:
+                        self.parameters['update_configuration']['targets']['azure_queries']['scope'] = self.normalize_resource_id(
+                            self.parameters['update_configuration']['targets']['azure_queries']['scope'],
+                            '/subscriptions/5ae68d89-69a4-454f-b5ce-e443cc4e0067')
 
         response = None
 
@@ -701,6 +718,7 @@ class AzureRMSoftwareUpdateConfiguration(AzureRMModuleBaseExt):
                 'created_by': response.get('created_by', None),
                 'last_modified_time': response.get('last_modified_time', None),
                 'last_modified_by': response.get('last_modified_by', None),
+                'name': response.get('name', None),
                 'id': response.get('id', None),
                 'type': response.get('type', None)
             })
@@ -718,8 +736,8 @@ class AzureRMSoftwareUpdateConfiguration(AzureRMModuleBaseExt):
             response = self.mgmt_client.software_update_configurations.create(resource_group_name=self.resource_group,
                                                                               automation_account_name=self.automation_account_name,
                                                                               software_update_configuration_name=self.name,
-                                                                              parameters=self.parameters,
-                                                                              client_request_id=self.client_request_id)
+                                                                              client_request_id=self.client_request_id,
+                                                                              parameters=self.parameters)
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
         except CloudError as exc:
