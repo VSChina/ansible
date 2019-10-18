@@ -87,7 +87,7 @@ extends_documentation_fragment:
     - azure_tags
 
 author:
-    - "Junyi Yi (@JunyiYi)"
+    - Junyi Yi (@JunyiYi)
 '''
 
 EXAMPLES = '''

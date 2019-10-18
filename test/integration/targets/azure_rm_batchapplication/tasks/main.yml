@@ -16,6 +16,7 @@
   set_fact:
     storage_account_name: "st{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
     batch_account_name: "ba{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
+    batch_application_name: "bap{{ resource_group | hash('md5') | truncate(7, True, '') }}{{ 1000 | random }}"
   run_once: yes
 
 - name: Create Storage Account
@@ -33,6 +34,12 @@
       auto_storage_account:
         name: "{{ storage_account_name }}"
       pool_allocation_mode: batch_service
+
+- name: Create Batch Application
+  azure_rm_batchapplication:
+      resource_group: "{{ resource_group }}"
+      name: "{{ batch_application_name }}"
+      account_name: "{{ batch_account_name }}"
   register: output
 
 - name: Assert the resource was created
@@ -40,14 +47,11 @@
     that:
       - output.changed
 
-- name: Create Batch Account -- idempotent
-  azure_rm_batchaccount:
+- name: Create Batch Application -- idempotent
+  azure_rm_batchapplication:
       resource_group: "{{ resource_group }}"
-      name: "{{ batch_account_name }}"
-      location: eastus
-      auto_storage_account:
-        name: "{{ storage_account_name }}"
-      pool_allocation_mode: batch_service
+      name: "{{ batch_application_name }}"
+      account_name: "{{ batch_account_name }}"
   register: output
 
 - name: Assert the resource was created
@@ -55,43 +59,11 @@
     that:
       - not output.changed
 
-- name: Get instance of Batch Account
-  azure_rm_batchaccount_info:
+- name: Delete Batch Application
+  azure_rm_batchapplication:
       resource_group: "{{ resource_group }}"
-      name: "{{ batch_account_name }}"
-  register: output
-
-- name: Assert that info is returned
-  assert:
-    that:
-      - not output.changed
-      - output['items'][0]['id'] != None
-      - output['items'][0]['resource_group'] != None
-      - output['items'][0]['name'] != None
-      - output['items'][0]['location'] != None
-      - output['items'][0]['auto_storage_account'] != None
-      - output['items'][0]['pool_allocation_mode'] != None
-
-- name: List instances of Batch Account
-  azure_rm_batchaccount_info:
-      resource_group: "{{ resource_group }}"
-  register: output
-
-- name: Assert that info is returned
-  assert:
-    that:
-      - not output.changed
-      - output['items'][0]['id'] != None
-      - output['items'][0]['resource_group'] != None
-      - output['items'][0]['name'] != None
-      - output['items'][0]['location'] != None
-      - output['items'][0]['auto_storage_account'] != None
-      - output['items'][0]['pool_allocation_mode'] != None
-
-- name: Delete Batch Account
-  azure_rm_batchaccount:
-      resource_group: "{{ resource_group }}"
-      name: "{{ batch_account_name }}"
+      name: "{{ batch_application_name }}"
+      account_name: "{{ batch_account_name }}"
       state: absent
   register: output
 
@@ -99,6 +71,12 @@
   assert:
     that:
       - output.changed
+
+- name: Delete Batch Account
+  azure_rm_batchaccount:
+      resource_group: "{{ resource_group }}"
+      name: "{{ batch_account_name }}"
+      state: absent
 
 - name: Delete Storage Account
   azure_rm_storageaccount:
