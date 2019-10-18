@@ -40,15 +40,15 @@ options:
         - The name of the resource group that contains the Batch account.
         required: true
         type: str
-    name:
-        description:
-        - "The identifier for the certificate. This must be made up of algorithm and thumbprint separated by a dash, and must match the certificate
-          data in the request. For example SHA1-a3d1c5."
-        required: true
-        type: str
     account_name:
         description:
         - The name of the Batch account.
+        required: true
+        type: str
+    certificate_name:
+        description:
+        - "The identifier for the certificate. This must be made up of algorithm and thumbprint separated by a dash, and must match the certificate
+          data in the request. For example SHA1-a3d1c5."
         required: true
         type: str
     data:
@@ -215,11 +215,13 @@ class AzureRMCertificate(AzureRMModuleBaseExt):
                 required=True,
                 type='str'
             ),
-            name=dict(
-                required=True,
-                type='str'
-            ),
             account_name=dict(
+                required=True,
+                type='str',
+                updatable=False,
+                disposition='/'
+            ),
+            certificate_name=dict(
                 required=True,
                 type='str',
                 updatable=False,
@@ -252,7 +254,7 @@ class AzureRMCertificate(AzureRMModuleBaseExt):
 
         self.resource_group = None
         self.account_name = None
-        self.name = None
+        self.certificate_name = None
         self.parameters = dict()
 
         self.results = dict(changed=False)
@@ -345,12 +347,12 @@ class AzureRMCertificate(AzureRMModuleBaseExt):
             if self.to_do == Actions.Create:
                 response = self.mgmt_client.certificate.create(resource_group_name=self.resource_group,
                                                                account_name=self.account_name,
-                                                               certificate_name=self.name,
+                                                               certificate_name=self.certificate_name,
                                                                parameters=self.parameters)
             else:
                 response = self.mgmt_client.certificate.update(resource_group_name=self.resource_group,
                                                                account_name=self.account_name,
-                                                               certificate_name=self.name,
+                                                               certificate_name=self.certificate_name,
                                                                parameters=self.parameters)
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
@@ -369,7 +371,7 @@ class AzureRMCertificate(AzureRMModuleBaseExt):
         try:
             response = self.mgmt_client.certificate.delete(resource_group_name=self.resource_group,
                                                            account_name=self.account_name,
-                                                           certificate_name=self.name)
+                                                           certificate_name=self.certificate_name)
         except CloudError as e:
             self.log('Error attempting to delete the Certificate instance.')
             self.fail("Error deleting the Certificate instance: {0}".format(str(e)))
@@ -388,7 +390,7 @@ class AzureRMCertificate(AzureRMModuleBaseExt):
         try:
             response = self.mgmt_client.certificate.get(resource_group_name=self.resource_group,
                                                         account_name=self.account_name,
-                                                        certificate_name=self.name)
+                                                        certificate_name=self.certificate_name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Certificate instance : {0} found".format(response.name))
