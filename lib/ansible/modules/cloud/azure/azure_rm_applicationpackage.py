@@ -40,6 +40,11 @@ options:
         - The name of the resource group that contains the Batch account.
         required: true
         type: str
+    name:
+        description:
+        - The version of the application.
+        required: true
+        type: str
     account_name:
         description:
         - The name of the Batch account.
@@ -48,11 +53,6 @@ options:
     application_name:
         description:
         - The name of the application. This must be unique within the account.
-        required: true
-        type: str
-    version_name:
-        description:
-        - The version of the application.
         required: true
         type: str
     state:
@@ -138,6 +138,10 @@ class AzureRMApplicationPackage(AzureRMModuleBaseExt):
                 required=True,
                 type='str'
             ),
+            name=dict(
+                required=True,
+                type='str'
+            ),
             account_name=dict(
                 required=True,
                 type='str',
@@ -145,12 +149,6 @@ class AzureRMApplicationPackage(AzureRMModuleBaseExt):
                 disposition='/'
             ),
             application_name=dict(
-                required=True,
-                type='str',
-                updatable=False,
-                disposition='/'
-            ),
-            version_name=dict(
                 required=True,
                 type='str',
                 updatable=False,
@@ -166,7 +164,7 @@ class AzureRMApplicationPackage(AzureRMModuleBaseExt):
         self.resource_group = None
         self.account_name = None
         self.application_name = None
-        self.version_name = None
+        self.name = None
         self.parameters = dict()
 
         self.results = dict(changed=False)
@@ -258,7 +256,7 @@ class AzureRMApplicationPackage(AzureRMModuleBaseExt):
             response = self.mgmt_client.application_package.create(resource_group_name=self.resource_group,
                                                                    account_name=self.account_name,
                                                                    application_name=self.application_name,
-                                                                   version_name=self.version_name,
+                                                                   version_name=self.name,
                                                                    parameters=self.parameters)
             if isinstance(response, LROPoller) or isinstance(response, AzureOperationPoller):
                 response = self.get_poller_result(response)
@@ -278,7 +276,7 @@ class AzureRMApplicationPackage(AzureRMModuleBaseExt):
             response = self.mgmt_client.application_package.delete(resource_group_name=self.resource_group,
                                                                    account_name=self.account_name,
                                                                    application_name=self.application_name,
-                                                                   version_name=self.version_name)
+                                                                   version_name=self.name)
         except CloudError as e:
             self.log('Error attempting to delete the Application Package instance.')
             self.fail("Error deleting the Application Package instance: {0}".format(str(e)))
@@ -298,7 +296,7 @@ class AzureRMApplicationPackage(AzureRMModuleBaseExt):
             response = self.mgmt_client.application_package.get(resource_group_name=self.resource_group,
                                                                 account_name=self.account_name,
                                                                 application_name=self.application_name,
-                                                                version_name=self.version_name)
+                                                                version_name=self.name)
             found = True
             self.log("Response : {0}".format(response))
             self.log("Application Package instance : {0} found".format(response.name))
